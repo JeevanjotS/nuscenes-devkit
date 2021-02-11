@@ -499,7 +499,7 @@ class NuScenesMap:
         patch = (x - radius, y - radius, x + radius, y + radius)
         return self.explorer.get_records_in_patch(patch, layer_names, mode=mode)
 
-    def discretize_centerlines(self, resolution_meters: float) -> List[np.array]:
+    def discretize_centerlines(self, resolution_meters: float, lane:bool , lane_connector: bool) -> List[np.array]:
         """
         Discretize the centerlines of lanes and lane connectors.
         :param resolution_meters: How finely to discretize the lane. Smaller values ensure curved
@@ -507,7 +507,44 @@ class NuScenesMap:
         :return: A list of np.arrays with x, y and z values for each point.
         """
         pose_lists = []
-        for lane in self.lane + self.lane_connector:
+        all_lanes = []
+
+        if lane:
+            all_lanes = self.lane
+        if lane_connector:
+            all_lanes += self.lane_connector
+
+        for lane in all_lanes:
+            my_lane = self.arcline_path_3.get(lane['token'], [])
+            discretized = np.array(discretize_lane(my_lane, resolution_meters))
+            pose_lists.append(discretized)
+
+        return pose_lists
+
+    def discretize_connectors(self, resolution_meters: float) -> List[np.array]:
+        """
+        Discretize the centerlines of lane connectors.
+        :param resolution_meters: How finely to discretize the lane. Smaller values ensure curved
+            lanes are properly represented.
+        :return: A list of np.arrays with x, y and z values for each point.
+        """
+        pose_lists = []
+        for lane in self.lane_connector:
+            my_lane = self.arcline_path_3.get(lane['token'], [])
+            discretized = np.array(discretize_lane(my_lane, resolution_meters))
+            pose_lists.append(discretized)
+
+        return pose_lists
+
+    def discretize_lanes(self, resolution_meters: float) -> List[np.array]:
+        """
+        Discretize the centerlines of lane connectors.
+        :param resolution_meters: How finely to discretize the lane. Smaller values ensure curved
+            lanes are properly represented.
+        :return: A list of np.arrays with x, y and z values for each point.
+        """
+        pose_lists = []
+        for lane in self.lane:
             my_lane = self.arcline_path_3.get(lane['token'], [])
             discretized = np.array(discretize_lane(my_lane, resolution_meters))
             pose_lists.append(discretized)
@@ -706,7 +743,7 @@ class NuScenesMapExplorer:
     def render_centerlines(self,
                            resolution_meters: float,
                            figsize: Union[None, float, Tuple[float, float]] = None,
-                           bitmap: Optional[BitMap] = None) -> Tuple[Figure, Axes]:
+                           bitmap: Optional[BitMap] = None, lane:bool = True, lane_connector:bool = True) -> Tuple[Figure, Axes]:
         """
         Render the centerlines of all lanes and lane connectors.
         :param resolution_meters: How finely to discretize the lane. Smaller values ensure curved
@@ -715,7 +752,7 @@ class NuScenesMapExplorer:
         :param bitmap: Optional BitMap object to render below the other map layers.
         """
         # Discretize all lanes and lane connectors.
-        pose_lists = self.map_api.discretize_centerlines(resolution_meters)
+        pose_lists = self.map_api.discretize_centerlines(resolution_meters, lane, lane_connectors)
 
         # Render connectivity lines.
         fig = plt.figure(figsize=self._get_figsize(figsize))
