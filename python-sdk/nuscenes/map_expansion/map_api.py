@@ -345,7 +345,7 @@ class NuScenesMap:
     def render_centerlines(self,
                            resolution_meters: float = 0.5,
                            figsize: Union[None, float, Tuple[float, float]] = None,
-                           bitmap: Optional[BitMap] = None) -> Tuple[Figure, Axes]:
+                           bitmap: Optional[BitMap] = None, lane = True, lane_connector = True) -> Tuple[Figure, Axes]:
         """
         Render the centerlines of all lanes and lane connectors.
         :param resolution_meters: How finely to discretize the lane. Smaller values ensure curved
@@ -353,7 +353,7 @@ class NuScenesMap:
         :param figsize: Size of the figure.
         :param bitmap: Optional BitMap object to render below the other map layers.
         """
-        return self.explorer.render_centerlines(resolution_meters=resolution_meters, figsize=figsize, bitmap=bitmap)
+        return self.explorer.render_centerlines(resolution_meters=resolution_meters, figsize=figsize, bitmap=bitmap, lane = lane, lane_connector = lane_connector)
 
     def render_map_mask(self,
                         patch_box: Tuple[float, float, float, float],
@@ -752,7 +752,7 @@ class NuScenesMapExplorer:
         :param bitmap: Optional BitMap object to render below the other map layers.
         """
         # Discretize all lanes and lane connectors.
-        pose_lists = self.map_api.discretize_centerlines(resolution_meters, lane, lane_connectors)
+        pose_lists = self.map_api.discretize_centerlines(resolution_meters, lane, lane_connector)
 
         # Render connectivity lines.
         fig = plt.figure(figsize=self._get_figsize(figsize))
